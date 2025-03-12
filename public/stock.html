@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Management</title>
+    <link rel="stylesheet" href="styleee.css">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div id="sidebar-container"></div>
+
+    <script>
+        // Load sidebar dynamically
+        fetch("sidebar.html")
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("sidebar-container").innerHTML = data;
+
+                // Highlight active sidebar link
+                const currentPage = window.location.pathname.split("/").pop();
+                document.querySelectorAll(".sidebar ul li a").forEach(link => {
+                    if (link.getAttribute("href") === currentPage) {
+                        link.classList.add("active");
+                    }
+                });
+            })
+            .catch(error => console.error("Error loading sidebar:", error));
+    </script>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="main-container">
+            <h1>Stock Overview</h1>
+
+            <!-- Summary Cards -->
+            <div class="summary">
+                <div class="card total-stock">Total Stock: <span id="totalStock">0</span></div>
+                <div class="card low-stock">Low Stock Items: <span id="lowStockCount">0</span></div>
+            </div>
+
+            <!-- Stock Form -->
+            <div class="stock-form">
+                <h3>Manage Stock</h3>
+                <form id="stockForm">
+                    <label for="product">Product Name:</label>
+                    <input type="text" id="product" required>
+
+                    <label for="quantity">Stock Quantity:</label>
+                    <input type="number" id="quantity" required>
+
+                    <label for="supplier">Supplier:</label>
+                    <input type="text" id="supplier" required>
+
+                    <label for="category">Category:</label>
+                    <select id="category">
+                        <option value="Electronics">Electronics</option>
+                        <option value="Grocery">Grocery</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                    <label for="action">Stock Action:</label>
+                    <select id="action">
+                        <option value="add">Add Stock</option>
+                        <option value="reduce">Reduce Stock</option>
+                    </select>
+
+                    <button type="submit">Update Stock</button>
+                </form>
+            </div>
+
+            <!-- Stock Table -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Stock Quantity</th>
+                        <th>Supplier</th>
+                        <th>Category</th>
+                        <th>Last Update</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTable"></tbody>
+            </table>
+
+            <!-- Stock Chart -->
+            <div class="chart-container">
+                <canvas id="stockChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="stock.js"></script>
+
+</body>
+</html>

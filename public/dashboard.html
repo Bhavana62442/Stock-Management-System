@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Dashboard</title>
+    <link rel="stylesheet" href="Dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h2><i class="fa-solid fa-list-ul"></i><span class = "text">Stock Maintenance</span></h2>
+        <ul>
+            <li><a href="dashboard.html"><i class="fa-solid fa-house"></i><span class="text">Dashboard</span></a></li>
+            <li><a href="inventory.html"><i class="fas fa-box"></i><span class="text">Inventory</span></a></li>
+            <li><a href="stock.html"><i class="fas fa-chart-bar"></i><span class="text">Stock Overview</span></a></li>
+            <li><a href="orders.html"><i class="fas fa-shopping-cart"></i><span class="text">Orders</span></a></li>
+            <li><a href="suppliers.html"><i class="fas fa-truck"></i><span class="text">Suppliers</span></a></li>
+            <li><a href="reports.html"><i class="fas fa-file-alt"></i><span class="text">Reports</span></a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <header>
+            <h1>Dashboard</h1>
+        </header>
+        
+        <section class="summary">
+            <div class="card">Total Products <span>9</span></div>
+            <div class="card">Low Stock <span>4</span></div>
+            <div class="card">Out of Stock <span>1</span></div>
+            <div class="card">Suppliers <span>5</span></div>
+        </section>
+        
+        <section class="stock-info">
+            <div class="stock-value">
+                <h2>Value of Stock</h2>
+                <p><strong>Total Stock Value:</strong> $3,186</p>
+                <h3>Stock Purchases</h3>
+                <p>Unfulfilled: 4 | Received: 1</p>
+            </div>
+            <div class="additional-metrics">
+                <h3>Additional Metrics</h3>
+                <p><strong>Stock Sold:</strong> 1,245 units</p>
+                <p><strong>Stock in Transit:</strong> 320 units</p>
+                <p><strong>Returned Stock:</strong> 58 units</p>
+                <p><strong>Defective Stock:</strong> 12 units</p>
+            </div>
+        </section>
+        
+        <section class="chart-container">
+            <div class="chart">
+                <h2>Warehouse Stock</h2>
+                <canvas id="stockChart"></canvas>
+            </div>
+            <div class="chart">
+                <h2>Sales Trends</h2>
+                <canvas id="salesChart"></canvas>
+            </div>
+        </section>
+    </div>
+    
+    <script>
+        function createBarChart() {
+            const ctx = document.getElementById('stockChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Item A', 'Item B', 'Item C', 'Item D', 'Item E'],
+                    datasets: [{
+                        label: 'Stock Levels',
+                        data: [20, 35, 30, 15, 10],
+                        backgroundColor: '#28104e'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Stock Quantity'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createLineChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                    datasets: [{
+                        label: 'Sales Trends',
+                        data: [50, 65, 80, 60, 75],
+                        borderColor: '#ff5733',
+                        backgroundColor: 'rgba(255, 87, 51, 0.2)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Sales Volume'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        createBarChart();
+        createLineChart();
+    </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Get the current page filename (e.g., "dashboard.html")
+        const currentPage = window.location.pathname.split("/").pop();
+    
+        // Get all sidebar links
+        const sidebarLinks = document.querySelectorAll(".sidebar ul li a");
+    
+        sidebarLinks.forEach(link => {
+            if (link.getAttribute("href") === currentPage) {
+                link.classList.add("active"); // Add the 'active' class
+            }
+        });
+    });
+    </script>
+</body>
+</html>

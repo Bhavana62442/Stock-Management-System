@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Dashboard</title>
+    <link rel="stylesheet" href="Dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h2><i class="fa-solid fa-list-ul"></i><span class="text">Stock Maintenance</span></h2>
+        <ul>
+            <li><a href="dashboard.html" class="nav-link"><i class="fa-solid fa-house"></i><span class="text">Dashboard</span></a></li>
+            <li><a href="inventory.html" class="nav-link"><i class="fas fa-box"></i><span class="text">Inventory</span></a></li>
+            <li><a href="stock.html" class="nav-link"><i class="fas fa-chart-bar"></i><span class="text">Stock Overview</span></a></li>
+            <li><a href="orders.html" class="nav-link"><i class="fas fa-shopping-cart"></i><span class="text">Orders</span></a></li>
+            <li><a href="suppliers.html" class="nav-link"><i class="fas fa-truck"></i><span class="text">Suppliers</span></a></li>
+            <li><a href="reports.html" class="nav-link"><i class="fas fa-file-alt"></i><span class="text">Reports</span></a></li>
+        </ul>
+    </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let links = document.querySelectorAll(".nav-link");
+            let currentUrl = window.location.pathname.split("/").pop(); // Get the current page name
+    
+            links.forEach(link => {
+                let linkUrl = link.getAttribute("href");
+    
+                if (currentUrl === linkUrl || (currentUrl === "" && linkUrl === "dashboard.html")) {
+                    link.classList.add("active");
+                }
+            });
+        });
+    </script>
+    
+    
+</body>
+</html>

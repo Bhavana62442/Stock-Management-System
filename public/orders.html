@@ -1,0 +1,85 @@
+\<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <div id="sidebar-container"></div>
+
+    <script>
+        // Load sidebar dynamically
+        fetch("sidebar.html")
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("sidebar-container").innerHTML = data;
+
+                // Highlight active sidebar link
+                const currentPage = window.location.pathname.split("/").pop();
+                document.querySelectorAll(".sidebar ul li a").forEach(link => {
+                    if (link.getAttribute("href") === currentPage) {
+                        link.classList.add("active");
+                    }
+                });
+            })
+            .catch(error => console.error("Error loading sidebar:", error));
+    </script>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="main-container">
+            <h1>📦 Place & Track Orders</h1>
+
+            <!-- Order Form -->
+            <div class="order-form">
+                <h3>Fill Order Details</h3>
+                <form id="orderForm">
+                    <label for="product">Product Name:</label>
+                    <input type="text" id="product" required>
+
+                    <label for="quantity">Quantity:</label>
+                    <input type="number" id="quantity" required>
+
+                    <label for="customer">Customer Name:</label>
+                    <input type="text" id="customer" required>
+
+                    <button type="submit">Place Order</button>
+                </form>
+            </div>
+
+            <!-- Order Table -->
+            <div class="order-list">
+                <h3>📋 Order Summary</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Product Name</th>
+                            <th>Quantity</th>
+                            <th>Customer</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderTable"></tbody>
+                </table>
+            </div>
+
+            <!-- Track Order -->
+            <div class="track-order">
+                <h3>🛒 Track Your Order</h3>
+                <label for="orderId">Enter Order ID:</label>
+                <input type="text" id="orderId" required>
+                <button onclick="trackOrder()">Track Order</button>
+
+                <div id="orderStatus"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="place_order.js"></script>
+</body>
+</html>

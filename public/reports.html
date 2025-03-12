@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Reports & Analytics</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; padding: 20px; background-color: #121212; color: #fff; }
+        .container { max-width: 1000px; margin: auto; }
+        .section { background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.1); margin-bottom: 20px; }
+        .chart-container { width: 100%; height: 300px; }
+        .filters { margin-bottom: 15px; }
+        select, button { padding: 10px; margin-right: 10px; border-radius: 5px; border: none; }
+        select { background: #333; color: #fff; }
+        button { background: #ffcc00; color: #000; cursor: pointer; }
+        button:hover { background: #e6b800; }
+        .export-buttons { margin-top: 15px; }
+        .export-buttons button { background: #ff5733; color: white; margin-right: 10px; }
+        .export-buttons button:hover { background: #cc4525; }
+        .alerts { background: #ff0000; color: white; padding: 10px; border-radius: 5px; margin-top: 15px; display: none; }
+        
+        /* Sidebar Styles */
+        #sidebar-container { width: 250px; float: left; margin-right: 20px; }
+        .active { background-color: #ffcc00; color: black !important; font-weight: bold; padding: 10px; border-radius: 5px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div id="sidebar-container"></div>
+
+    <script>
+        fetch("sidebar.html")
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("sidebar-container").innerHTML = data;
+
+                // Highlight the active link
+                const stockReportsLink = document.getElementById("stock-reports-link");
+                if (stockReportsLink) {
+                    stockReportsLink.classList.add("active");
+                }
+            })
+            .catch(error => console.error("Error loading sidebar:", error));
+    </script>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="section">
+            <h2>Stock Reports & Analytics</h2>
+
+            <div class="filters">
+                <select id="timeRange">
+                    <option value="6">Last 6 Months</option>
+                    <option value="12">Last 12 Months</option>
+                    <option value="24">Last 2 Years</option>
+                </select>
+                <button onclick="updateChart()">Apply</button>
+            </div>
+
+            <canvas id="stockChart" class="chart-container"></canvas>
+            <canvas id="salesChart" class="chart-container"></canvas>
+
+            <div class="export-buttons">
+                <button onclick="exportReport('pdf')">Export as PDF</button>
+                <button onclick="exportReport('csv')">Export as CSV</button>
+            </div>
+
+            <div class="alerts" id="stockAlert">⚠️ Stock running low on critical items!</div>
+        </div>
+    </div>
+
+    <script>
+        function generateRandomData(points) {
+            return Array.from({ length: points }, () => Math.floor(Math.random() * 200) + 50);
+        }
+
+        function updateChart() {
+            const timeRange = document.getElementById('timeRange').value;
+            const labels = Array.from({ length: timeRange }, (_, i) => `Month ${i + 1}`);
+
+            stockChart.data.labels = labels;
+            stockChart.data.datasets[0].data = generateRandomData(timeRange);
+            stockChart.update();
+
+            salesChart.data.labels = labels;
+            salesChart.data.datasets[0].data = generateRandomData(timeRange);
+            salesChart.update();
+
+            checkStockLevels();
+        }
+
+        function exportReport(format) {
+            alert(`✅ Exporting report as ${format.toUpperCase()}...`);
+        }
+
+        function checkStockLevels() {
+            const stockValues = stockChart.data.datasets[0].data;
+            const lowStock = stockValues.some(value => value < 70); // Alert if any stock level < 70
+            document.getElementById('stockAlert').style.display = lowStock ? 'block' : 'none';
+        }
+
+        // Initialize Charts
+        const stockCtx = document.getElementById('stockChart').getContext('2d');
+        const stockChart = new Chart(stockCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Stock Levels',
+                    data: generateRandomData(6),
+                    backgroundColor: 'rgba(255, 204, 0, 0.6)',
+                    borderColor: '#ffcc00',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        const salesChart = new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Sales Trend',
+                    data: generateRandomData(6),
+                    borderColor: '#00ccff',
+                    backgroundColor: 'rgba(0, 204, 255, 0.2)',
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        checkStockLevels();
+    </script>
+
+</body>
+</html>

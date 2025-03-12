@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register & Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script type="module" src="firebaseauth.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            padding: 0 10%;
+        }
+        .info-section {
+            width: 40%;
+            color: white;
+        }
+        .info-section h1 {
+            font-size: 2.5em;
+        }
+        .info-section p {
+            font-size: 1.2em;
+        }
+        .container {
+            width: 40%;
+            background: white;
+            color: black;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        .btn {
+            background: #2575fc;
+            color: white;
+            padding: 10px;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        .links {
+            text-align: center;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="info-section">
+        <h1>Stock Management System</h1>
+        <p>Efficiently manage your inventory, track stock levels, and streamline operations with our powerful stock management system.</p>
+    </div>
+
+    <div class="container" id="signup" style="display:none;">
+        <h1 class="form-title">Register</h1>
+        <form id="signupForm">
+            <div id="signUpMessage" class="messageDiv" style="display:none;"></div>
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="fName" placeholder="First Name" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="lName" placeholder="Last Name" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="rEmail" placeholder="Email" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="rPassword" placeholder="Password" required>
+            </div>
+            <button type="button" class="btn" id="submitSignUp">Sign Up</button>
+        </form>
+        <p class="or">----------or--------</p>
+        <div class="icons">
+            <i class="fab fa-google"></i>
+            <i class="fab fa-facebook"></i>
+        </div>
+        <div class="links">
+            <p>Already Have an Account?</p>
+            <button id="signInButton">Sign In</button>
+        </div>
+    </div>
+
+    <div class="container" id="signIn">
+        <h1 class="form-title">Sign In</h1>
+        <form id="loginForm">
+            <div id="signInMessage" class="messageDiv" style="display:none;"></div>
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" placeholder="Email" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            <p class="recover"><a href="#">Recover Password</a></p>
+            <button type="button" class="btn" id="submitSignIn">Sign In</button>
+        </form>
+        <p class="or">----------or--------</p>
+        <div class="icons">
+            <i class="fab fa-google"></i>
+            <i class="fab fa-facebook"></i>
+        </div>
+        <div class="links">
+            <p>Don't have an account yet?</p>
+            <button id="signUpButton">Sign Up</button>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById("signUpButton").addEventListener("click", function() {
+            window.location.href = "signup.html";
+        });
+
+        document.getElementById("submitSignIn").addEventListener("click", function() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            
+            import("./firebaseauth.js").then((module) => {
+                module.signInUser(email, password)
+                    .then(() => {
+                        window.location.href = "dashboard.html";
+                    })
+                    .catch((error) => {
+                        alert("Login failed: " + error.message);
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
