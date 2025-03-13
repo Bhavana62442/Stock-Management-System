@@ -3,21 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Order</title>
-    <link rel="stylesheet" href="Dashboard.css">
+    <title>Supplier List</title>
+    <link rel="stylesheet" href="Inventory.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+        .container {
+            width: 90%;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #673ab7;
+            color: white;
+        }
+        input, select {
+            padding: 8px;
+            width: 200px;
+            margin-right: 10px;
+        }
+    </style>
 </head>
 <body>
-
-    <!-- Sidebar -->
     <div id="sidebar-container"></div>
-
+    
+    <div class="content">
+        <div class="container">
+            <h2>Supplier List</h2>
+            
+            <!-- Search & Filter Options -->
+            <input type="text" id="searchName" placeholder="Search by Supplier Name" onkeyup="filterTable()">
+            <input type="text" id="searchTxn" placeholder="Search by Transaction ID" onkeyup="filterTable()">
+            
+            <select id="categoryFilter" onchange="filterTable()">
+                <option value="">All Categories</option>
+            </select>
+    
+            <!-- Suppliers Table -->
+            <table id="suppliersTable">
+                <thead>
+                    <tr>
+                        <th>Supplier Name</th>
+                        <th>Branch (State - District)</th>
+                        <th>Contact</th>
+                        <th>Email</th>
+                        <th>Category</th>
+                        <th>Transaction ID</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+    
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCwjFQXSwBsAPGCaUOlm-VWb28QTQKdeWM",
+            authDomain: "stockmaintainence-dabe5.firebaseapp.com",
+            databaseURL: "https://stockmaintainence-dabe5-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "stockmaintainence-dabe5",
+            storageBucket: "stockmaintainence-dabe5.appspot.com",
+            messagingSenderId: "43533671684",
+            appId: "1:43533671684:web:d7025dc879ddf16a590451",
+            measurementId: "G-TR05GFK3K9"
+        };
+    
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+    </script>
     <script>
         // Load sidebar dynamically
         fetch("sidebar.html")
             .then(response => response.text())
             .then(data => {
                 document.getElementById("sidebar-container").innerHTML = data;
-
+    
                 // Highlight active sidebar link
                 const currentPage = window.location.pathname.split("/").pop();
                 document.querySelectorAll(".sidebar ul li a").forEach(link => {
@@ -27,23 +111,91 @@
                 });
             })
             .catch(error => console.error("Error loading sidebar:", error));
+    
+        // Supplier Names
+        const supplierNames = [
+            "Alpha Traders", "BlueWave Distributors", "Cityline Supplies", "Delta Exports",
+            "Everest Goods", "Fusion Enterprises", "Global Links", "HighPeak Suppliers"
+        ];
+    
+        // Indian States & Districts
+        const branches = [
+            "Karnataka - Bengaluru", "Maharashtra - Mumbai", "Tamil Nadu - Chennai", "West Bengal - Kolkata",
+            "Uttar Pradesh - Lucknow", "Kerala - Kochi", "Punjab - Ludhiana", "Gujarat - Ahmedabad",
+            "Rajasthan - Jaipur", "Bihar - Patna", "Madhya Pradesh - Bhopal", "Odisha - Bhubaneswar"
+        ];
+    
+        // Categories of Suppliers
+        const categories = ["Electronics", "Groceries", "Clothing", "Furniture", "Automobiles", "Beauty", "Pharmacy", "Sports"];
+    
+        // Populate Category Filter Dropdown
+        function populateCategoryDropdown() {
+            let categoryDropdown = document.getElementById("categoryFilter");
+            categories.forEach(category => {
+                let option = document.createElement("option");
+                option.value = category.toLowerCase();
+                option.textContent = category;
+                categoryDropdown.appendChild(option);
+            });
+        }
+    
+        function generateSuppliers(count) {
+            let suppliers = [];
+            for (let i = 1; i <= count; i++) {
+                let name = supplierNames[Math.floor(Math.random() * supplierNames.length)];
+                let branch = branches[Math.floor(Math.random() * branches.length)];
+                let contact = "98765" + (1000 + i);
+                let email = name.toLowerCase().replace(/\s+/g, '') + branch.split(" - ")[0].toLowerCase() + "@example.com";
+                let assignedCategory = categories[Math.floor(Math.random() * categories.length)];
+                let txnId = "TXN" + (38223 + i);
+    
+                suppliers.push({ name, branch, contact, email, category: assignedCategory, txnId });
+            }
+            return suppliers;
+        }
+    
+        function populateTable() {
+            let suppliers = generateSuppliers(100);
+            let tableBody = document.querySelector("#suppliersTable tbody");
+            tableBody.innerHTML = "";
+    
+            suppliers.forEach(supplier => {
+                let row = `<tr>
+                    <td>${supplier.name}</td>
+                    <td>${supplier.branch}</td>
+                    <td>${supplier.contact}</td>
+                    <td>${supplier.email}</td>
+                    <td>${supplier.category}</td>
+                    <td>${supplier.txnId}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+    
+        function filterTable() {
+            let nameInput = document.getElementById("searchName").value.toLowerCase();
+            let txnInput = document.getElementById("searchTxn").value.toLowerCase();
+            let categoryInput = document.getElementById("categoryFilter").value.toLowerCase();
+            let rows = document.querySelectorAll("#suppliersTable tbody tr");
+    
+            rows.forEach(row => {
+                let nameText = row.cells[0].textContent.toLowerCase();
+                let txnText = row.cells[5].textContent.toLowerCase();
+                let categoryText = row.cells[4].textContent.toLowerCase();
+    
+                if (nameText.includes(nameInput) && txnText.includes(txnInput) && (categoryInput === "" || categoryText === categoryInput)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+    
+        document.addEventListener("DOMContentLoaded", () => {
+            populateTable();
+            populateCategoryDropdown();
+        });
     </script>
-
-    <!-- Main Content -->
-    <div class="container">
-        <h1>🛒 Track Your Order</h1>
-
-        <form action="TrackOrderServlet" method="post">
-            <label for="orderId">Enter Order ID:</label>
-            <input type="text" id="orderId" name="orderId" required>
-            <button type="submit">Track Order</button>
-        </form>
-
-        <div id="orderStatus"></div>
-
-        <!-- Dashboard Button -->
-        <button onclick="window.location.href='dashboard.html'" class="dashboard-btn">Go to Dashboard</button>
-    </div>
-
+    
 </body>
 </html>

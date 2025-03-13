@@ -1,4 +1,4 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,61 +7,105 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    
-    <!-- Sidebar -->
+
     <div id="sidebar-container"></div>
 
     <script>
-        // Load sidebar dynamically
         fetch("sidebar.html")
             .then(response => response.text())
             .then(data => {
                 document.getElementById("sidebar-container").innerHTML = data;
-
-                // Highlight active sidebar link
-                const currentPage = window.location.pathname.split("/").pop();
-                document.querySelectorAll(".sidebar ul li a").forEach(link => {
-                    if (link.getAttribute("href") === currentPage) {
-                        link.classList.add("active");
-                    }
-                });
             })
             .catch(error => console.error("Error loading sidebar:", error));
     </script>
 
-    <!-- Main Content -->
     <div class="container">
         <div class="main-container">
-            <h1>📦 Place & Track Orders</h1>
+            <h1>Place & Track Orders</h1>
 
             <!-- Order Form -->
             <div class="order-form">
                 <h3>Fill Order Details</h3>
-                <form id="orderForm">
-                    <label for="product">Product Name:</label>
-                    <input type="text" id="product" required>
-
-                    <label for="quantity">Quantity:</label>
-                    <input type="number" id="quantity" required>
-
-                    <label for="customer">Customer Name:</label>
-                    <input type="text" id="customer" required>
-
-                    <button type="submit">Place Order</button>
-                </form>
+                <table>
+                    <tr>
+                        <td><label for="product">Product Name:</label></td>
+                        <td><input type="text" id="product" required></td>
+                    </tr>
+                    <tr>
+                        <td><label for="category">Category:</label></td>
+                        <td>
+                            <select id="category" required onchange="calculateCost()">
+                                <option value="">Select Category</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Groceries">Groceries</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Furniture">Furniture</option>
+                                <option value="Automobiles">Clothing</option>
+                                <option value="Beauty">Furniture</option>
+                                <option value="Pharmacy">Clothing</option>
+                                <option value="Sports">Furniture</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="supplier">Supplier:</label></td>
+                        <td>
+                            <select id="supplier" required>
+                                <option value="">Select Supplier</option>
+                                <option value="Alpha Traders">Alpha Traders</option>
+                                <option value="BlueWave Distributors">BlueWave Distributors</option>
+                                <option value="Cityline Supplies">Cityline Supplies</option>
+                                <option value="Delta Exports">Delta Exports</option>
+                                <option value="Everest Goods">Everest Goods</option>
+                                <option value="Fusion Enterprises">Fusion Enterprises</option>
+                                <option value="Global Links">Global Links</option>
+                                <option value="HighPeak Suppliers">HighPeak Suppliers</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="quantity">Quantity:</label></td>
+                        <td><input type="number" id="quantity" min="1" required oninput="calculateCost()"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="customer">Customer Name:</label></td>
+                        <td><input type="text" id="customer" required></td>
+                    </tr>
+                    <tr>
+                        <td><label for="address">Delivery Address:</label></td>
+                        <td><textarea id="address" required></textarea></td>
+                    </tr>
+                    <tr>
+                        <td><label for="cost">Total Cost:</label></td>
+                        <td><input type="text" id="cost" readonly></td>
+                    </tr>
+                </table>
+                <button type="button" onclick="placeOrder()">Proceed to Payment</button>
             </div>
 
-            <!-- Order Table -->
+            <!-- Payment Section -->
+            <div class="payment-section" id="paymentSection" style="display: none;">
+                <h3>Complete Payment</h3>
+                <p>Transaction ID: <span id="transactionId"></span></p>
+                <p>Order ID: <span id="orderId"></span></p>
+                <button onclick="completePayment()">Pay Now</button>
+            </div>
+
+            <!-- Order Summary -->
             <div class="order-list">
-                <h3>📋 Order Summary</h3>
-                <table>
+                <h3>Order Summary</h3>
+                <table border="1">
                     <thead>
                         <tr>
+                            <th>Order ID</th>
                             <th>Transaction ID</th>
-                            <th>Product Name</th>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Supplier</th>
                             <th>Quantity</th>
                             <th>Customer</th>
-                            <th>Status</th>
+                            <th>Delivery Address</th>
+                            <th>Payment Status</th>
                         </tr>
                     </thead>
                     <tbody id="orderTable"></tbody>
@@ -70,16 +114,199 @@
 
             <!-- Track Order -->
             <div class="track-order">
-                <h3>🛒 Track Your Order</h3>
-                <label for="orderId">Enter Order ID:</label>
-                <input type="text" id="orderId" required>
+                <h3>Track Your Order</h3>
+                <label for="orderIdInput">Enter Order ID:</label>
+                <input type="text" id="orderIdInput" required>
                 <button onclick="trackOrder()">Track Order</button>
-
                 <div id="orderStatus"></div>
             </div>
         </div>
     </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+    
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCwjFQXSwBsAPGCaUOlm-VWb28QTQKdeWM",
+            authDomain: "stockmaintainence-dabe5.firebaseapp.com",
+            databaseURL: "https://stockmaintainence-dabe5-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "stockmaintainence-dabe5",
+            storageBucket: "stockmaintainence-dabe5.appspot.com",
+            messagingSenderId: "43533671684",
+            appId: "1:43533671684:web:d7025dc879ddf16a590451",
+            measurementId: "G-TR05GFK3K9"
+        };
+    
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+    
+        // Function to place an order and store it in Firebase
+        window.completePayment = function () {
+            let transactionId = "TXN" + Math.floor(Math.random() * 100000);
+            let orderId = "ORD" + Math.floor(Math.random() * 100000);
+            let product = document.getElementById("product").value;
+            let category = document.getElementById("category").value;
+            let supplier = document.getElementById("supplier").value;
+            let quantity = document.getElementById("quantity").value;
+            let customer = document.getElementById("customer").value;
+            let address = document.getElementById("address").value;
+            let totalCost = document.getElementById("cost").value;
+    
+            if (!product || !category || !supplier || !quantity || !customer || !address) {
+                alert("Please fill all fields before proceeding.");
+                return;
+            }
+    
+            const ordersRef = ref(database, "orders");
+            const newOrderRef = push(ordersRef); // Create a new order entry
+    
+            set(newOrderRef, {
+                orderId: orderId,
+                transactionId: transactionId,
+                product: product,
+                category: category,
+                supplier: supplier,
+                quantity: quantity,
+                customer: customer,
+                address: address,
+                totalCost: totalCost,
+                status: "Paid"
+            }).then(() => {
+                alert("Payment Successful! Your order has been placed.");
+                document.getElementById("transactionId").innerText = transactionId;
+                document.getElementById("orderId").innerText = orderId;
+                document.getElementById("paymentSection").style.display = "none";
+                fetchOrders(); // Refresh order summary
+            }).catch((error) => {
+                console.error("Error storing order:", error);
+                alert("Error processing order. Try again.");
+            });
+        };
+    
+        // Function to fetch orders from Firebase
+        function fetchOrders() {
+            const ordersRef = ref(database, "orders");
+    
+            onValue(ordersRef, (snapshot) => {
+                const orderTable = document.getElementById("orderTable");
+                orderTable.innerHTML = ""; // Clear existing data
+    
+                snapshot.forEach(childSnapshot => {
+                    let order = childSnapshot.val();
+    
+                    let row = `
+                        <tr>
+                            <td>${order.orderId}</td>
+                            <td>${order.transactionId}</td>
+                            <td>${order.product}</td>
+                            <td>${order.category}</td>
+                            <td>${order.supplier}</td>
+                            <td>${order.quantity}</td>
+                            <td>${order.customer}</td>
+                            <td>${order.address}</td>
+                            <td>${order.status}</td>
+                        </tr>
+                    `;
+                    orderTable.innerHTML += row;
+                });
+            });
+        }
+    
+        // Fetch orders on page load
+        window.onload = function () {
+            fetchOrders();
+        };
+    
+    </script>
+    <script>
+        function calculateCost() {
+            let quantity = document.getElementById("quantity").value || 1;
+            let category = document.getElementById("category").value;
+            let pricePerItem = 50;
 
-    <script src="place_order.js"></script>
+            if (category === "Electronics") pricePerItem = 200;
+            if (category === "Furniture") pricePerItem = 150;
+            if (category === "Groceries") pricePerItem = 30;
+            if (category === "Clothing") pricePerItem = 400;
+            if (category === "Automobiles")perItem = 3000;
+            if (category === "Beauty") pricePerItem = 500;
+            if (category === "Pharmacy") pricePerItem = 30;
+            if (category === "Sports") pricePerItem = 300;
+
+            document.getElementById("cost").value = "$" + (quantity * pricePerItem);
+        }
+
+        function placeOrder() {
+            let transactionId = "TXN" + Math.floor(Math.random() * 100000);
+            let orderId = "ORD" + Math.floor(Math.random() * 100000);
+
+            document.getElementById("transactionId").innerText = transactionId;
+            document.getElementById("orderId").innerText = orderId;
+            document.getElementById("paymentSection").style.display = "block";
+        }
+
+        function completePayment() {
+            let product = document.getElementById("product").value;
+            let category = document.getElementById("category").value;
+            let supplier = document.getElementById("supplier").value;
+            let quantity = document.getElementById("quantity").value;
+            let customer = document.getElementById("customer").value;
+            let address = document.getElementById("address").value;
+            let transactionId = document.getElementById("transactionId").innerText;
+            let orderId = document.getElementById("orderId").innerText;
+
+            let newRow = `
+                <tr>
+                    <td>${orderId}</td>
+                    <td>${transactionId}</td>
+                    <td>${product}</td>
+                    <td>${category}</td>
+                    <td>${supplier}</td>
+                    <td>${quantity}</td>
+                    <td>${customer}</td>
+                    <td>${address}</td>
+                    <td>Paid</td>
+                </tr>
+            `;
+            document.getElementById("orderTable").innerHTML += newRow;
+            alert("Payment Successful! Your order has been placed.");
+        }
+
+        function trackOrder() {
+            let orderId = document.getElementById("orderIdInput").value.trim();
+            let orders = document.getElementById("orderTable").rows;
+
+            for (let row of orders) {
+                if (row.cells[0].innerText === orderId) {
+                    let orderDate = new Date();
+                    let shippedDate = new Date(orderDate);
+                    shippedDate.setDate(orderDate.getDate() + 2);
+
+                    let outForDeliveryDate = new Date(shippedDate);
+                    outForDeliveryDate.setDate(shippedDate.getDate() + 3);
+
+                    let deliveredDate = new Date(outForDeliveryDate);
+                    deliveredDate.setDate(outForDeliveryDate.getDate() + 2);
+
+                    let location = "Warehouse → Distribution Center → Customer Address";
+
+                    document.getElementById("orderStatus").innerHTML = `
+                        <p><b>Order Status:</b> Paid & Processed</p>
+                        <p><b>Location:</b> ${location}</p>
+                        <p><b>Order Date:</b> ${orderDate.toDateString()}</p>
+                        <p><b>Shipped Date:</b> ${shippedDate.toDateString()}</p>
+                        <p><b>Out for Delivery:</b> ${outForDeliveryDate.toDateString()}</p>
+                        <p><b>Delivered Date:</b> ${deliveredDate.toDateString()}</p>
+                    `;
+                    return;
+                }
+            }
+
+            document.getElementById("orderStatus").innerHTML = `<p style="color: red;"><b>Order Not Found!</b></p>`;
+        }
+    </script>
+
 </body>
 </html>
+

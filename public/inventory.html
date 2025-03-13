@@ -4,141 +4,147 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Inventory System</title>
-    <link rel="stylesheet" href="sty.css">
+    <link rel="stylesheet" href="inventory.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin-top: 20px; }
         input, select, button { margin: 5px; padding: 8px; }
-        table { width: 80%; margin: auto; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 10px; border: 1px solid black; text-align: center; }
-        th { background-color: #4CAF50; color: white; }
+        table { width: 100%; margin: auto; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; border: 1px solid black; text-align: center; }
+        th { background-color: #3f226c; color: white; } /* Purple Header */
         button { cursor: pointer; }
-        .delete-btn { background: red; color: white; border: none; padding: 5px 10px; }
+        .delete-btn { background: rgb(96, 0, 0); color: white; border: none; padding: 5px 10px; }
         .delete-btn:hover { background: darkred; }
     </style>
 </head>
 <body>
 
-    <script type="module">
-        // Import Firebase functions
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getDatabase, ref, set, push, child, onValue } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+    <div class="sidebar">
+        <h2><i class="fa-solid fa-list-ul"></i><span class="text">Stock Maintenance</span></h2>
+        <ul>
+            <li><a href="dashboard.html"><i class="fa-solid fa-house"></i><span class="text">Dashboard</span></a></li>
+            <li><a href="inventory.html" class="active"><i class="fas fa-box"></i><span class="text">Inventory</span></a></li>
+            <li><a href="stock.html"><i class="fas fa-chart-bar"></i><span class="text">Stock Overview</span></a></li>
+            <li><a href="orders.html"><i class="fas fa-shopping-cart"></i><span class="text">Orders</span></a></li>
+            <li><a href="suppliers.html"><i class="fas fa-truck"></i><span class="text">Suppliers</span></a></li>
+            <li><a href="reports.html"><i class="fas fa-file-alt"></i><span class="text">Reports</span></a></li>
+        </ul>
+    </div>
 
-        // 🔹 Your Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCwjFQXSwBsAPGCaUOlm-VWb28QTQKdeWM",
-            authDomain: "stockmaintainence-dabe5.firebaseapp.com",
-            databaseURL: "https://stockmaintainence-dabe5-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "stockmaintainence-dabe5",
-            storageBucket: "stockmaintainence-dabe5.appspot.com",
-            messagingSenderId: "43533671684",
-            appId: "1:43533671684:web:d7025dc879ddf16a590451",
-            measurementId: "G-TR05GFK3K9"
-        };
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+    import { getDatabase, ref, set, push, child, onValue, remove, query, limitToLast } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+    const firebaseConfig = {
+        apiKey: "AIzaSyCwjFQXSwBsAPGCaUOlm-VWb28QTQKdeWM",
+        authDomain: "stockmaintainence-dabe5.firebaseapp.com",
+        databaseURL: "https://stockmaintainence-dabe5-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "stockmaintainence-dabe5",
+        storageBucket: "stockmaintainence-dabe5.appspot.com",
+        messagingSenderId: "43533671684",
+        appId: "1:43533671684:web:d7025dc879ddf16a590451",
+        measurementId: "G-TR05GFK3K9"
+    };
 
-        // Function to add an item to Firebase
-        window.addItem = function() {
-            const itemName = document.getElementById("itemName").value.trim();
-            const stockQuantity = document.getElementById("stockQuantity").value.trim();
-            const category = document.getElementById("category").value;
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
 
-            if (!itemName || !stockQuantity) {
-                alert("Please enter item name and stock quantity!");
-                return;
-            }
+    // Add item function
+    window.addItem = function () {
+        const itemName = document.getElementById("ProductName").value.trim();
+        const productID = document.getElementById("ProductID").value.trim();
+        const supplier = document.getElementById("supplier").value.trim();
+        const cost = document.getElementById("cost").value.trim();
+        const unit = document.getElementById("Unit").value;
+        const currentQuantity = document.getElementById("currentQuantity").value.trim();
+        const minimumQuantity = document.getElementById("minimumQuantity").value.trim();
+        const reorderQuantity = document.getElementById("reorderQuantity").value.trim();
+        const category = document.getElementById("category").value;
+        const status = document.getElementById("Status").value;
 
-            const newItemRef = push(child(ref(database), "inventory"));
-            set(newItemRef, {
-                itemName: itemName,
-                stockQuantity: parseInt(stockQuantity),
-                category: category
-            })
-            .then(() => {
-                alert("Item added successfully!");
-                document.getElementById("itemName").value = "";
-                document.getElementById("stockQuantity").value = "";
-            })
-            .catch(error => {
-                alert("Error adding item: " + error.message);
-            });
-        };
+        if (!itemName || !productID || !supplier || !cost || !currentQuantity || !minimumQuantity || !reorderQuantity) {
+            alert("Please fill in all fields!");
+            return;
+        }
 
-        // Function to display items
-        function displayItems(items) {
+        const newItemRef = push(child(ref(database), "inventory"));
+        set(newItemRef, {
+            itemName,
+            productID,
+            supplier,
+            cost: parseFloat(cost),
+            unit,
+            currentQuantity: parseInt(currentQuantity),
+            minimumQuantity: parseInt(minimumQuantity),
+            reorderQuantity: parseInt(reorderQuantity),
+            category,
+            status
+        })
+        .then(() => {
+            alert("Item added successfully!");
+            document.getElementById("inventoryForm").reset();
+            fetchInventory(); // Update UI instantly
+        })
+        .catch(error => alert("Error adding item: " + error.message));
+    };
+
+    // Fetch inventory (Last 100 Items)
+    function fetchInventory() {
+        const inventoryRef = query(ref(database, "inventory"), limitToLast(100));
+
+        onValue(inventoryRef, (snapshot) => {
             const inventoryTable = document.getElementById("inventoryTable");
-            inventoryTable.innerHTML = ""; // Clear previous items
+            inventoryTable.innerHTML = ""; 
 
-            items.forEach(item => {
+            snapshot.forEach(childSnapshot => {
+                let item = childSnapshot.val();
                 let row = `<tr>
                     <td>${item.itemName}</td>
-                    <td>${item.stockQuantity}</td>
+                    <td>${item.productID}</td>
+                    <td>${item.supplier}</td>
+                    <td>${item.cost}</td>
+                    <td>${item.unit}</td>
+                    <td>${item.currentQuantity}</td>
+                    <td>${item.minimumQuantity}</td>
+                    <td>${item.reorderQuantity}</td>
                     <td>${item.category}</td>
-                    <td><button class="delete-btn" onclick="deleteItem('${item.id}')">Delete</button></td>
+                    <td>${item.status}</td>
+                    <td><button class="delete-btn" onclick="deleteItem('${childSnapshot.key}')">Delete</button></td>
                 </tr>`;
                 inventoryTable.innerHTML += row;
             });
-        }
+        });
+    }
 
-        // Fetch first 100 items from Firebase in order
-        function fetchInventory() {
-            const inventoryRef = ref(database, "inventory");
-            onValue(inventoryRef, (snapshot) => {
-                let items = [];
-                snapshot.forEach(childSnapshot => {
-                    let item = childSnapshot.val();
-                    item.id = childSnapshot.key;
-                    items.push(item);
-                });
-
-                // Sort by item name (you can change this if needed)
-                items.sort((a, b) => a.itemName.localeCompare(b.itemName));
-
-                // Limit to first 100 items
-                displayItems(items.slice(0, 100));
-            });
-        }
-
-        // Function to search inventory
-        window.searchInventory = function() {
-            const searchValue = document.getElementById("searchBar").value.toLowerCase();
-            const rows = document.querySelectorAll("#inventoryTable tr");
-
-            rows.forEach(row => {
-                const itemName = row.cells[0].textContent.toLowerCase();
-                row.style.display = itemName.includes(searchValue) ? "" : "none";
-            });
-        };
-
-        // Fetch inventory on page load
-        window.onload = fetchInventory;
-    </script>
-
-    <!-- Sidebar Container -->
-    <div id="sidebar-container"></div>
-    <script>
-        // Load sidebar dynamically
-        fetch("sidebar.html")
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById("sidebar-container").innerHTML = data;
-
-                // Highlight active sidebar link
-                const currentPage = window.location.pathname.split("/").pop();
-                document.querySelectorAll(".sidebar ul li a").forEach(link => {
-                    if (link.getAttribute("href") === currentPage) {
-                        link.classList.add("active");
-                    }
-                });
+    // Delete Item
+    window.deleteItem = function (id) {
+        const itemRef = ref(database, "inventory/" + id);
+        remove(itemRef)
+            .then(() => {
+                alert("Item deleted successfully!");
+                fetchInventory(); // Refresh table
             })
-            .catch(error => console.error("Error loading sidebar:", error));
-    </script>
+            .catch(error => alert("Error deleting item: " + error.message));
+    };
 
-    <div class="container">
-        <h2>Stock Inventory Management</h2>
+    // Search Inventory
+    window.searchInventory = function () {
+        const searchValue = document.getElementById("searchBar").value.toLowerCase();
+        const rows = document.querySelectorAll("#inventoryTable tr");
 
+        rows.forEach(row => {
+            const itemName = row.cells[0].textContent.toLowerCase();
+            row.style.display = itemName.includes(searchValue) ? "" : "none";
+        });
+    };
+
+    window.onload = fetchInventory;
+</script>
+
+<div class="main-content">
+    <h2>Stock Inventory Management</h2>
+
+    <form id="inventoryForm">
         <input type="text" id="ProductName" placeholder="Product Name">
         <input type="number" id="ProductID" placeholder="Product ID">
         <input type="text" id="supplier" placeholder="Supplier">
@@ -148,7 +154,7 @@
             <option value="Kgs">Kgs</option>
             <option value="Liters">Liters</option>
             <option value="Carton">Cartons</option>
-            <option value="dozen">Dozen</option>
+            <option value="Dozen">Dozen</option>
         </select>
         <input type="number" id="currentQuantity" placeholder="Current Quantity">
         <input type="number" id="minimumQuantity" placeholder="Minimum Quantity">
@@ -160,36 +166,35 @@
             <option value="Other">Other</option>
         </select>
         <select id="Status">
-            <option value="active">Active</option>
+            <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
         </select>
-        <button onclick="addItem()">Add Item</button>
+        <button type="button" onclick="addItem()">Add Item</button>
+    </form>
 
-        <br><br>
+    <br><br>
 
-        <!-- Search Bar -->
-        <input type="text" id="searchBar" placeholder="Search Item..." onkeyup="searchInventory()">
+    <!-- Search Bar -->
+    <input type="text" id="searchBar" placeholder="Search Item..." onkeyup="searchInventory()">
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Item Name</th>
-                    <th>Product ID</th>
-                    <th>Supplier</th>
-                    <th>Cost</th>
-                    <th>Unit</th>
-                    <th>Current Quantity</th>
-                    <th>Minimum Quantity</th>
-                    <th>Reorder Quantity</th>
-                    <th>Category</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="inventoryTable"></tbody>
-        </table>
-        
-    </div>
-
+    <table>
+        <thead>
+            <tr>
+                <th>Item Name</th>
+                <th>Product ID</th>
+                <th>Supplier</th>
+                <th>Cost</th>
+                <th>Unit</th>
+                <th>Current Quantity</th>
+                <th>Minimum Quantity</th>
+                <th>Reorder Quantity</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="inventoryTable"></tbody>
+    </table>
+</div>
 </body>
 </html>

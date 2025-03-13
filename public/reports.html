@@ -4,48 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Reports & Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; padding: 20px; background-color: #121212; color: #fff; }
-        .container { max-width: 1000px; margin: auto; }
-        .section { background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.1); margin-bottom: 20px; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f0ff; color: #333; display: flex; }
+        .container { max-width: 1000px; margin: auto; padding: 20px; flex: 1; }
+
+        .sidebar { width: 250px; background: #6a40b5; color: white; height: 100vh; padding: 20px; position: fixed; }
+        .sidebar a { display: block; color: white; text-decoration: none; padding: 10px; margin-bottom: 5px; border-radius: 5px; }
+        .sidebar a:hover, .sidebar .active { background: #4d2e94; }
+
+        .section { background: #e6dbff; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #6a40b5; }
+
         .chart-container { width: 100%; height: 300px; }
         .filters { margin-bottom: 15px; }
         select, button { padding: 10px; margin-right: 10px; border-radius: 5px; border: none; }
-        select { background: #333; color: #fff; }
-        button { background: #ffcc00; color: #000; cursor: pointer; }
-        button:hover { background: #e6b800; }
+        select { background: #a875ff; color: white; }
+        button { background: #6a40b5; color: white; cursor: pointer; }
+        button:hover { background: #4d2e94; }
         .export-buttons { margin-top: 15px; }
-        .export-buttons button { background: #ff5733; color: white; margin-right: 10px; }
-        .export-buttons button:hover { background: #cc4525; }
-        .alerts { background: #ff0000; color: white; padding: 10px; border-radius: 5px; margin-top: 15px; display: none; }
-        
-        /* Sidebar Styles */
-        #sidebar-container { width: 250px; float: left; margin-right: 20px; }
-        .active { background-color: #ffcc00; color: black !important; font-weight: bold; padding: 10px; border-radius: 5px; }
+        .export-buttons button { background: #d471ff; color: white; margin-right: 10px; }
+        .export-buttons button:hover { background: #b45edd; }
+
+        /* Review Section */
+        .review { border-bottom: 1px solid #ccc; padding: 10px 0; }
+        .review:last-child { border-bottom: none; }
+        .review-header { display: flex; justify-content: space-between; align-items: center; }
+        .review-rating { color: #6a40b5; font-weight: bold; }
+        .review-form textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #6a40b5; background: #f4edff; color: #333; resize: vertical; }
+        .review-form button { margin-top: 10px; background: #6a40b5; padding: 10px 20px; border-radius: 5px; cursor: pointer; color: white; border: none; }
+        .review-form button:hover { background: #4d2e94; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
     <!-- Sidebar -->
-    <div id="sidebar-container"></div>
+    <div class="sidebar">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="inventory.html">Inventory List</a>
+        <a href="stock-management.html">Stock Management</a>
+        <a href="orders.html">Orders & Transactions</a>
+        <a href="suppliers.html">Suppliers & Customers</a>
+        <a href="report.html" class="active">Stock Reports & Analytics</a>
+    </div>
 
-    <script>
-        fetch("sidebar.html")
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById("sidebar-container").innerHTML = data;
-
-                // Highlight the active link
-                const stockReportsLink = document.getElementById("stock-reports-link");
-                if (stockReportsLink) {
-                    stockReportsLink.classList.add("active");
-                }
-            })
-            .catch(error => console.error("Error loading sidebar:", error));
-    </script>
-
-    <!-- Main Container -->
+    <!-- Main Content -->
     <div class="container">
         <div class="section">
             <h2>Stock Reports & Analytics</h2>
@@ -66,8 +68,34 @@
                 <button onclick="exportReport('pdf')">Export as PDF</button>
                 <button onclick="exportReport('csv')">Export as CSV</button>
             </div>
+        </div>
 
-            <div class="alerts" id="stockAlert">⚠️ Stock running low on critical items!</div>
+        <!-- Reviews Section -->
+        <div class="section">
+            <h2>User Reviews</h2>
+            <div id="reviews-container">
+                <div class="review">
+                    <div class="review-header">
+                        <strong>John Doe</strong>
+                        <span class="review-rating">⭐⭐⭐⭐⭐</span>
+                    </div>
+                    <p>"Excellent analytics tool. The charts are very interactive and provide a clear overview of stock trends."</p>
+                </div>
+                <div class="review">
+                    <div class="review-header">
+                        <strong>Jane Smith</strong>
+                        <span class="review-rating">⭐⭐⭐⭐</span>
+                    </div>
+                    <p>"Very useful reporting features, although I would love to see more detailed sales breakdowns in future updates."</p>
+                </div>
+            </div>
+
+            <!-- Review Form -->
+            <div class="review-form">
+                <h3>Add Your Review</h3>
+                <textarea id="userReview" rows="4" placeholder="Write your review here..."></textarea>
+                <button onclick="submitReview()">Submit Review</button>
+            </div>
         </div>
     </div>
 
@@ -87,60 +115,44 @@
             salesChart.data.labels = labels;
             salesChart.data.datasets[0].data = generateRandomData(timeRange);
             salesChart.update();
-
-            checkStockLevels();
         }
 
         function exportReport(format) {
             alert(`✅ Exporting report as ${format.toUpperCase()}...`);
         }
 
-        function checkStockLevels() {
-            const stockValues = stockChart.data.datasets[0].data;
-            const lowStock = stockValues.some(value => value < 70); // Alert if any stock level < 70
-            document.getElementById('stockAlert').style.display = lowStock ? 'block' : 'none';
+        function submitReview() {
+            const reviewText = document.getElementById("userReview").value.trim();
+            if (reviewText === "") {
+                alert("⚠ Please write a review before submitting!");
+                return;
+            }
+
+            const newReview = document.createElement("div");
+            newReview.classList.add("review");
+            newReview.innerHTML = `
+                <div class="review-header">
+                    <strong>Anonymous</strong>
+                    <span class="review-rating">⭐⭐⭐⭐</span>
+                </div>
+                <p>${reviewText}</p>
+            `;
+
+            document.getElementById("reviews-container").appendChild(newReview);
+            document.getElementById("userReview").value = ""; // Clear input
+            alert("✅ Review submitted successfully!");
         }
 
         // Initialize Charts
-        const stockCtx = document.getElementById('stockChart').getContext('2d');
-        const stockChart = new Chart(stockCtx, {
+        const stockChart = new Chart(document.getElementById('stockChart').getContext('2d'), {
             type: 'bar',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Stock Levels',
-                    data: generateRandomData(6),
-                    backgroundColor: 'rgba(255, 204, 0, 0.6)',
-                    borderColor: '#ffcc00',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: { y: { beginAtZero: true } }
-            }
+            data: { labels: ['Jan', 'Feb', 'Mar'], datasets: [{ label: 'Stock Levels', data: generateRandomData(3), backgroundColor: 'rgba(106, 64, 181, 0.6)', borderColor: '#6a40b5', borderWidth: 1 }] }
         });
 
-        const salesCtx = document.getElementById('salesChart').getContext('2d');
-        const salesChart = new Chart(salesCtx, {
+        const salesChart = new Chart(document.getElementById('salesChart').getContext('2d'), {
             type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Sales Trend',
-                    data: generateRandomData(6),
-                    borderColor: '#00ccff',
-                    backgroundColor: 'rgba(0, 204, 255, 0.2)',
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: { y: { beginAtZero: true } }
-            }
+            data: { labels: ['Jan', 'Feb', 'Mar'], datasets: [{ label: 'Sales Trend', data: generateRandomData(3), borderColor: '#a875ff', backgroundColor: 'rgba(168, 117, 255, 0.2)', fill: true }] }
         });
-
-        checkStockLevels();
     </script>
 
 </body>

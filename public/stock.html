@@ -3,98 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Management</title>
-    <link rel="stylesheet" href="styleee.css">
+    <title>Stock Overview</title>
+    <link rel="stylesheet" href="stock.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 20px; }
+        input, select, button { margin: 5px; padding: 8px; }
+        table { width: 100%; margin: auto; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; border: 1px solid black; text-align: center; }
+        th { background-color: #3f226c; color: white; }
+        button { cursor: pointer; }
+        .delete-btn { background: rgb(96, 0, 0); color: white; border: none; padding: 5px 10px; }
+        .delete-btn:hover { background: darkred; }
+        .increase-btn, .decrease-btn { padding: 5px 10px; border: none; color: white; cursor: pointer; }
+        .increase-btn { background: green; }
+        .decrease-btn { background: orange; }
+        .increase-btn:hover { background: darkgreen; }
+        .decrease-btn:hover { background: darkorange; }
+        .low-stock { background: #ffcccc; } /* Light red for low stock */
+    </style>
 </head>
 <body>
 
-    <!-- Sidebar -->
-    <div id="sidebar-container"></div>
-
-    <script>
-        // Load sidebar dynamically
-        fetch("sidebar.html")
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById("sidebar-container").innerHTML = data;
-
-                // Highlight active sidebar link
-                const currentPage = window.location.pathname.split("/").pop();
-                document.querySelectorAll(".sidebar ul li a").forEach(link => {
-                    if (link.getAttribute("href") === currentPage) {
-                        link.classList.add("active");
-                    }
-                });
-            })
-            .catch(error => console.error("Error loading sidebar:", error));
-    </script>
-
-    <!-- Main Content -->
-    <div class="container">
-        <div class="main-container">
-            <h1>Stock Overview</h1>
-
-            <!-- Summary Cards -->
-            <div class="summary">
-                <div class="card total-stock">Total Stock: <span id="totalStock">0</span></div>
-                <div class="card low-stock">Low Stock Items: <span id="lowStockCount">0</span></div>
-            </div>
-
-            <!-- Stock Form -->
-            <div class="stock-form">
-                <h3>Manage Stock</h3>
-                <form id="stockForm">
-                    <label for="product">Product Name:</label>
-                    <input type="text" id="product" required>
-
-                    <label for="quantity">Stock Quantity:</label>
-                    <input type="number" id="quantity" required>
-
-                    <label for="supplier">Supplier:</label>
-                    <input type="text" id="supplier" required>
-
-                    <label for="category">Category:</label>
-                    <select id="category">
-                        <option value="Electronics">Electronics</option>
-                        <option value="Grocery">Grocery</option>
-                        <option value="Clothing">Clothing</option>
-                        <option value="Other">Other</option>
-                    </select>
-
-                    <label for="action">Stock Action:</label>
-                    <select id="action">
-                        <option value="add">Add Stock</option>
-                        <option value="reduce">Reduce Stock</option>
-                    </select>
-
-                    <button type="submit">Update Stock</button>
-                </form>
-            </div>
-
-            <!-- Stock Table -->
-            <table>
-                <thead>
-                    <tr>
-                        <th>Product Name</th>
-                        <th>Stock Quantity</th>
-                        <th>Supplier</th>
-                        <th>Category</th>
-                        <th>Last Update</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="stockTable"></tbody>
-            </table>
-
-            <!-- Stock Chart -->
-            <div class="chart-container">
-                <canvas id="stockChart"></canvas>
-            </div>
-        </div>
+    <div class="sidebar">
+        <h2><i class="fa-solid fa-list-ul"></i><span class="text">Stock Maintenance</span></h2>
+        <ul>
+            <li><a href="dashboard.html"><i class="fa-solid fa-house"></i><span class="text">Dashboard</span></a></li>
+            <li><a href="inventory.html"><i class="fas fa-box"></i><span class="text">Inventory</span></a></li>
+            <li><a href="stock.html" class="active"><i class="fas fa-chart-bar"></i><span class="text">Stock Overview</span></a></li>
+            <li><a href="orders.html"><i class="fas fa-shopping-cart"></i><span class="text">Orders</span></a></li>
+            <li><a href="suppliers.html"><i class="fas fa-truck"></i><span class="text">Suppliers</span></a></li>
+            <li><a href="reports.html"><i class="fas fa-file-alt"></i><span class="text">Reports</span></a></li>
+        </ul>
+    </div>
+    <div class="stock-alerts" id="lowStockAlerts">
+        <ul id="lowStockList"></ul>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="stock.js"></script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+    import { getDatabase, ref, set, push, child, onValue, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
+    const firebaseConfig = {
+        apiKey: "AIzaSyCwjFQXSwBsAPGCaUOlm-VWb28QTQKdeWM",
+        authDomain: "stockmaintainence-dabe5.firebaseapp.com",
+        databaseURL: "https://stockmaintainence-dabe5-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "stockmaintainence-dabe5",
+        storageBucket: "stockmaintainence-dabe5.appspot.com",
+        messagingSenderId: "43533671684",
+        appId: "1:43533671684:web:d7025dc879ddf16a590451",
+        measurementId: "G-TR05GFK3K9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    
+
+    // Fetch stock data
+    function fetchStock() {
+        const stockRef = ref(database, "inventory");
+
+        onValue(stockRef, (snapshot) => {
+            const stockTable = document.getElementById("stockTable");
+            stockTable.innerHTML = ""; 
+
+            snapshot.forEach(childSnapshot => {
+                let item = childSnapshot.val();
+                let rowClass = item.currentQuantity < item.minimumQuantity ? "low-stock" : "";
+
+                let row = `<tr class="${rowClass}">
+                    <td>${item.itemName}</td>
+                    <td>${item.currentQuantity}</td>
+                    <td>${item.minimumQuantity}</td>
+                    <td>${item.category}</td>
+                    <td>
+                        <button class="increase-btn" onclick="updateStock('${childSnapshot.key}', 1)">+</button>
+                        <button class="decrease-btn" onclick="updateStock('${childSnapshot.key}', -1)">-</button>
+                    </td>
+                </tr>`;
+                stockTable.innerHTML += row;
+            });
+        });
+    }
+
+    // Update Stock Quantity
+    window.updateStock = function (id, change) {
+        const itemRef = ref(database, `inventory/${id}`);
+
+        onValue(itemRef, (snapshot) => {
+            let item = snapshot.val();
+            let newQuantity = item.currentQuantity + change;
+
+            if (newQuantity < 0) {
+                alert("Stock cannot be negative!");
+                return;
+            }
+
+            update(itemRef, { currentQuantity: newQuantity }).then(() => {
+                alert(`Stock updated successfully!`);
+                logStockMovement(item.itemName, change);
+            });
+        }, { onlyOnce: true });
+    };
+
+    // Log Stock Movement
+    function logStockMovement(productName, quantityChanged) {
+        const historyRef = push(child(ref(database), "stockHistory"));
+        set(historyRef, {
+            productName,
+            quantityChanged,
+            timestamp: new Date().toLocaleString()
+        });
+    }
+
+    // Search Stock
+    window.searchStock = function () {
+        const searchValue = document.getElementById("searchBar").value.toLowerCase();
+        const rows = document.querySelectorAll("#stockTable tr");
+
+        rows.forEach(row => {
+            const itemName = row.cells[0].textContent.toLowerCase();
+            row.style.display = itemName.includes(searchValue) ? "" : "none";
+        });
+    };
+
+    // Filter Low Stock
+    window.filterLowStock = function () {
+        const rows = document.querySelectorAll("#stockTable tr");
+
+        rows.forEach(row => {
+            let currentQty = parseInt(row.cells[1].textContent);
+            let minQty = parseInt(row.cells[2].textContent);
+            row.style.display = currentQty < minQty ? "" : "none";
+        });
+    };
+
+    // Filter Out of Stock
+    window.filterOutOfStock = function () {
+        const rows = document.querySelectorAll("#stockTable tr");
+
+        rows.forEach(row => {
+            let currentQty = parseInt(row.cells[1].textContent);
+            row.style.display = currentQty === 0 ? "" : "none";
+        });
+    };
+
+    window.filterStock = function () {
+        const categoryValue = document.getElementById("categoryFilter").value.toLowerCase();
+        const rows = document.querySelectorAll("#stockTable tr");
+
+        rows.forEach(row => {
+            const category = row.cells[3].textContent.toLowerCase();
+            row.style.display = category.includes(categoryValue) || categoryValue === "" ? "" : "none";
+        });
+    };
+    // Fetch and populate categories dynamically
+function fetchCategories() {
+    const stockRef = ref(database, "inventory");
+    const categorySelect = document.getElementById("categoryFilter");
+    let categories = new Set();
+
+    onValue(stockRef, (snapshot) => {
+        categories.clear(); // Clear previous data
+        snapshot.forEach(childSnapshot => {
+            let item = childSnapshot.val();
+            if (item.category) {
+                categories.add(item.category); // Store unique categories
+            }
+        });
+
+        // Populate dropdown
+        categorySelect.innerHTML = `<option value="">All Categories</option>`;
+        categories.forEach(category => {
+            categorySelect.innerHTML += `<option value="${category}">${category}</option>`;
+        });
+    });
+}
+
+// Fetch stock and categories when page loads
+window.onload = function () {
+    fetchStock();
+    fetchCategories();
+};
+
+function updateLowStockAlerts() {
+        const stockTable = document.querySelectorAll("#stockTable tr");
+        const alertBox = document.getElementById("lowStockAlerts");
+        const alertList = document.getElementById("lowStockList");
+
+        alertStockItems = [];
+        alertStockItemsOutOfStock = [];
+
+        stockTable.forEach(row => {
+            let itemName = row.cells[0].textContent;
+            let currentQty = parseInt(row.cells[1].textContent);
+            let minQty = parseInt(row.cells[2].textContent);
+
+            if (currentQty < minQty) {
+                alertStockItems.push(`${itemName} is low on stock! Only ${currentQty} left.`);
+            }
+
+            if (currentQty === 0) {
+                alertStockItemsOutOfStock.push(itemName + " is out of stock!");
+            }
+        });
+
+        let messages = [...alertStockItemsOutOfStock, ...alertStockItems];
+
+        alertList.innerHTML = "";
+        messages.forEach(msg => {
+            alertList.innerHTML += `<li>${msg}</li>`;
+        });
+
+        if (messages.length > 0) {
+            alertBox.style.display = "block";
+        } else {
+            alertBox.style.display = "none";
+        }
+    }
+
+    fetchCategories();
+    fetchStock();
+    updateLowStockAlerts();
+
+    // Function to remove all filters and show all items
+window.removeFilters = function () {
+    document.getElementById("searchBar").value = ""; // Clear search input
+    document.getElementById("categoryFilter").value = ""; // Reset category filter
+
+    // Show all rows in the stock table
+    const rows = document.querySelectorAll("#stockTable tr");
+    rows.forEach(row => {
+        row.style.display = "";
+    });
+};
+
+</script>
+
+<div class="main-content">
+    <h2>Stock Overview</h2>
+    
+    <!-- Filters -->
+    <input type="text" id="searchBar" placeholder="Search Item..." onkeyup="searchStock()">
+    <select id="categoryFilter" onchange="filterStock()">
+        <option value="">All Categories</option>
+    </select>
+    <button onclick="filterLowStock()">Show Low Stock</button>
+    <button onclick="filterOutOfStock()">Show Out of Stock</button>
+    <button onclick="removeFilters()">Remove Filters</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Item Name</th>
+                <th>Current Quantity</th>
+                <th>Minimum Quantity</th>
+                <th>Category</th>
+                <th>Update Stock</th>
+            </tr>
+        </thead>
+        <tbody id="stockTable"></tbody>
+    </table>
+
+</div>
 </body>
 </html>

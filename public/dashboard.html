@@ -9,8 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    
     <div class="sidebar">
-        <h2><i class="fa-solid fa-list-ul"></i><span class = "text">Stock Maintenance</span></h2>
+        <h2><i class="fa-solid fa-list-ul"></i><span class="text">Stock Maintenance</span></h2>
         <ul>
             <li><a href="dashboard.html"><i class="fa-solid fa-house"></i><span class="text">Dashboard</span></a></li>
             <li><a href="inventory.html"><i class="fas fa-box"></i><span class="text">Inventory</span></a></li>
@@ -27,50 +28,131 @@
         </header>
         
         <section class="summary">
-            <div class="card">Total Products <span>9</span></div>
-            <div class="card">Low Stock <span>4</span></div>
-            <div class="card">Out of Stock <span>1</span></div>
-            <div class="card">Suppliers <span>5</span></div>
+            <div class="card"><p><strong>Total Products:</strong> <span id="totalProducts">0</span></p></div>
+            <div class="card"><p><strong>Low Stock:</strong> <span id="lowStock">0</span></p></div>
+            <div class="card"><p><strong>Out of Stock:</strong> <span id="outOfStock">0</span></p></div>
+            <div class="card"><p><strong>Suppliers:</strong> <span id="totalSuppliers">0</span></p></div>
         </section>
         
-        <section class="stock-info">
+        <section class="stock-info-container">
             <div class="stock-value">
                 <h2>Value of Stock</h2>
-                <p><strong>Total Stock Value:</strong> $3,186</p>
-                <h3>Stock Purchases</h3>
-                <p>Unfulfilled: 4 | Received: 1</p>
+                <p><strong>Total Stock Value:</strong> ₹<span id="stockValue">0</span></p>
+                <h3>Stock Reorder Alerts</h3>
+                <ul id="reorderList"></ul>
             </div>
-            <div class="additional-metrics">
-                <h3>Additional Metrics</h3>
-                <p><strong>Stock Sold:</strong> 1,245 units</p>
-                <p><strong>Stock in Transit:</strong> 320 units</p>
-                <p><strong>Returned Stock:</strong> 58 units</p>
-                <p><strong>Defective Stock:</strong> 12 units</p>
+            <div class="popular-items">
+                <h2>Most Popular Items</h2>
+                <canvas id="popularItemsChart"></canvas>
             </div>
-        </section>
-        
-        <section class="chart-container">
             <div class="chart">
                 <h2>Warehouse Stock</h2>
                 <canvas id="stockChart"></canvas>
             </div>
-            <div class="chart">
-                <h2>Sales Trends</h2>
-                <canvas id="salesChart"></canvas>
-            </div>
         </section>
+        <section  class="quote-section">
+            <p class="quote-text">“Efficiency is doing things right; effectiveness is doing the right things.”</p>
+            <p class="quote-author">- Peter Drucker</p>
+        </section>  
     </div>
-    
     <script>
-        function createBarChart() {
+        document.addEventListener("DOMContentLoaded", function () {
+            // Get the current page filename (e.g., "dashboard.html")
+            const currentPage = window.location.pathname.split("/").pop();
+        
+            // Select all sidebar links
+            const sidebarLinks = document.querySelectorAll(".sidebar ul li a");
+        
+            sidebarLinks.forEach(link => {
+                let linkPage = link.getAttribute("href").split("/").pop(); // Get link's filename
+        
+                if (linkPage === currentPage) {
+                    link.classList.add("active"); // Add the 'active' class
+                } else {
+                    link.classList.remove("active"); // Remove active class if not on this page
+                }
+            });
+        });
+        </script>
+        
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+        apiKey: "AIzaSyCwjFQXSwBsAPGCaUOlm-VWb28QTQKdeWM",
+        authDomain: "stockmaintainence-dabe5.firebaseapp.com",
+        databaseURL: "https://stockmaintainence-dabe5-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "stockmaintainence-dabe5",
+        storageBucket: "stockmaintainence-dabe5.appspot.com",
+        messagingSenderId: "43533671684",
+        appId: "1:43533671684:web:d7025dc879ddf16a590451",
+        measurementId: "G-TR05GFK3K9"
+    };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const inventoryRef = ref(database, "inventory");
+
+        function updateDashboard() {
+            onValue(inventoryRef, (snapshot) => {
+                let totalProducts = 0;
+                let lowStock = 0;
+                let outOfStock = 0;
+                let totalStockValue = 0;
+                let suppliersSet = new Set();
+                let reorderItems = [];
+                let stockData = {};
+
+                snapshot.forEach((childSnapshot) => {
+                    const product = childSnapshot.val();
+                    totalProducts++;
+                    suppliersSet.add(product.supplier);
+
+                    let quantity = product.currentQuantity || 0;
+                    let minQuantity = product.minimumQuantity || 0;
+                    let reorderQuantity = product.reorderQuantity || 0;
+                    let cost = product.cost || 0;
+
+                    totalStockValue += quantity * cost;
+
+                    if (quantity <= 0) outOfStock++;
+                    if (quantity < minQuantity) lowStock++;
+                    if (quantity < reorderQuantity) reorderItems.push(`${product.itemName} (Qty: ${quantity})`);
+
+                    stockData[product.itemName] = quantity;
+                });
+
+                document.getElementById("totalProducts").innerText = totalProducts;
+                document.getElementById("lowStock").innerText = lowStock;
+                document.getElementById("outOfStock").innerText = outOfStock;
+                document.getElementById("totalSuppliers").innerText = suppliersSet.size;
+                document.getElementById("stockValue").innerText = `${totalStockValue.toLocaleString("en-IN")}`;
+
+
+                let reorderList = document.getElementById("reorderList");
+                reorderList.innerHTML = "";
+                reorderItems.forEach(item => {
+                    let li = document.createElement("li");
+                    li.innerText = item;
+                    reorderList.appendChild(li);
+                });
+
+                createBarChart(stockData);
+            });
+        }
+
+        function createBarChart(stockData) {
             const ctx = document.getElementById('stockChart').getContext('2d');
-            new Chart(ctx, {
+            if (window.stockChartInstance) window.stockChartInstance.destroy();
+
+            window.stockChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Item A', 'Item B', 'Item C', 'Item D', 'Item E'],
+                    labels: Object.keys(stockData),
                     datasets: [{
                         label: 'Stock Levels',
-                        data: [20, 35, 30, 15, 10],
+                        data: Object.values(stockData),
                         backgroundColor: '#28104e'
                     }]
                 },
@@ -79,62 +161,62 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Stock Quantity'
-                            }
+                            title: { display: true, text: 'Stock Quantity' }
                         }
                     }
                 }
             });
         }
+        function updatePopularItemsChart() {
+    onValue(inventoryRef, (snapshot) => {
+        let itemNames = [];
+        let itemQuantities = [];
 
-        function createLineChart() {
-            const ctx = document.getElementById('salesChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-                    datasets: [{
-                        label: 'Sales Trends',
-                        data: [50, 65, 80, 60, 75],
-                        borderColor: '#ff5733',
-                        backgroundColor: 'rgba(255, 87, 51, 0.2)',
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Sales Volume'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        createBarChart();
-        createLineChart();
-    </script>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Get the current page filename (e.g., "dashboard.html")
-        const currentPage = window.location.pathname.split("/").pop();
-    
-        // Get all sidebar links
-        const sidebarLinks = document.querySelectorAll(".sidebar ul li a");
-    
-        sidebarLinks.forEach(link => {
-            if (link.getAttribute("href") === currentPage) {
-                link.classList.add("active"); // Add the 'active' class
-            }
+        snapshot.forEach((childSnapshot) => {
+            const product = childSnapshot.val();
+            itemNames.push(product.itemName);
+            itemQuantities.push(product.currentQuantity);
         });
+
+        createDonutChart(itemNames, itemQuantities);
     });
+}
+
+function createDonutChart(itemNames, itemQuantities) {
+    const ctx = document.getElementById('popularItemsChart').getContext('2d');
+    if (window.popularItemsChartInstance) window.popularItemsChartInstance.destroy();
+
+    window.popularItemsChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: itemNames,
+            datasets: [{
+                data: itemQuantities,
+                backgroundColor: [
+                    '#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40'
+                ],
+                hoverOffset: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'Most Popular Items (Stock Quantity)'
+                }
+            }
+        }
+    });
+}
+
+// Call function when page loads
+document.addEventListener("DOMContentLoaded", updatePopularItemsChart);
+        document.addEventListener("DOMContentLoaded", updateDashboard);
     </script>
+      
 </body>
 </html>
