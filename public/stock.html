@@ -77,9 +77,9 @@
                     <td>${item.minimumQuantity}</td>
                     <td>${item.category}</td>
                     <td>
-                        <button class="increase-btn" onclick="updateStock('${childSnapshot.key}', 1)">+</button>
-                        <button class="decrease-btn" onclick="updateStock('${childSnapshot.key}', -1)">-</button>
-                    </td>
+                       <input type="number" id="stockInput-${childSnapshot.key}" class="stock-input" min="1" value="1">
+                        <button class="increase-btn" onclick="updateStock('${childSnapshot.key}', 'increase')">+</button>
+                        <button class="decrease-btn" onclick="updateStock('${childSnapshot.key}', 'decrease')">-</button>
                 </tr>`;
                 stockTable.innerHTML += row;
             });
@@ -87,12 +87,19 @@
     }
 
     // Update Stock Quantity
-    window.updateStock = function (id, change) {
+    window.updateStock = function (id, action) {
         const itemRef = ref(database, `inventory/${id}`);
+        let quantityInput = document.getElementById(`stockInput-${id}`).value;
+        let quantityChange = parseInt(quantityInput) || 1; // Default to 1 if invalid
+
+        if (quantityChange <= 0) {
+            alert("Please enter a valid quantity!");
+            return;
+        }
 
         onValue(itemRef, (snapshot) => {
             let item = snapshot.val();
-            let newQuantity = item.currentQuantity + change;
+            let newQuantity = action === "increase" ? item.currentQuantity + quantityChange : item.currentQuantity - quantityChange;
 
             if (newQuantity < 0) {
                 alert("Stock cannot be negative!");
@@ -101,7 +108,7 @@
 
             update(itemRef, { currentQuantity: newQuantity }).then(() => {
                 alert(`Stock updated successfully!`);
-                logStockMovement(item.itemName, change);
+                logStockMovement(item.itemName, action === "increase" ? `+${quantityChange}` : `-${quantityChange}`);
             });
         }, { onlyOnce: true });
     };
@@ -258,8 +265,7 @@ window.removeFilters = function () {
                 <th>Current Quantity</th>
                 <th>Minimum Quantity</th>
                 <th>Category</th>
-                <th>Update Stock</th>
-            </tr>
+                <th>Update stock</th>
         </thead>
         <tbody id="stockTable"></tbody>
     </table>

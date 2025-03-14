@@ -141,14 +141,14 @@ body {
 
 /* Main Content */
 .main-content {
-    margin-left: 110px;
+    margin-left: 170px;
     padding: 20px;
     flex-grow: 1;
     transition: margin-left 0.3s ease;
 }
 
 .sidebar:hover ~ .main-content {
-    margin-left: 270px;
+    margin-left: 290px;
 }
 
 /* Heading */
@@ -186,7 +186,7 @@ button:hover {
 
 /* Table Styling */
 table {
-    width: 50%;
+    width: 100%;
     margin-left:0;
     border-collapse: collapse;
     background: #d1c4e9;
